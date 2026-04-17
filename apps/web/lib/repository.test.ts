@@ -118,7 +118,7 @@ describe("map explorer panel", () => {
 describe("species cards", () => {
   it("surfaces reusable visuals for public-facing species records", async () => {
     const species = await listSpecies();
-    const active = await getSpecies("quetzal");
+    const active = await getSpecies("resplandeciente-quetzal");
 
     expect(species[0]?.visual).toMatchObject({
       kind: expect.any(String),

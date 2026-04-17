@@ -1,6 +1,9 @@
 {
   "name": "biogt",
   "private": true,
+  "engines": {
+    "node": ">=22 <25"
+  },
   "workspaces": [
     "apps/*"
   ],

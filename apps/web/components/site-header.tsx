@@ -28,20 +28,31 @@ export async function SiteHeader() {
       </Link>
 
       <nav className="site-nav" aria-label="Principal">
-        <Link href="/map">Mapa</Link>
+        <Link href="/">Inicio</Link>
         <Link href="/search">Buscar</Link>
         <Link href="/sources">Fuentes</Link>
-        {session ? <Link href="/account">Cuenta</Link> : <Link href="/sign-in">Ingresar</Link>}
+      </nav>
+
+      <div className="site-header-actions">
         {session && ["moderator", "admin"].includes(session.user.role) ? (
-          <Link href="/moderation">Moderación</Link>
+          <div className="site-admin-links">
+            <Link href="/moderation">Moderación</Link>
+            {session.user.role === "admin" ? <Link href="/admin">Admin</Link> : null}
+          </div>
         ) : null}
-        {session?.user.role === "admin" ? <Link href="/admin">Admin</Link> : null}
+
+        {session ? <Link className="site-account-link" href="/account">Cuenta</Link> : <Link className="site-account-link" href="/sign-in">Ingresar</Link>}
+
+        <Link className="site-map-cta" href="/map">
+          Abrir mapa
+        </Link>
+
         {session ? (
           <form action={signOutAction}>
             <button type="submit">Salir</button>
           </form>
         ) : null}
-      </nav>
+      </div>
     </header>
   );
 }

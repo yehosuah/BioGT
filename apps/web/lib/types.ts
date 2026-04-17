@@ -110,6 +110,7 @@ export type SpeciesRecord = {
   sourceIds: string[];
   sourceTiers?: SourceTier[];
   heroMetric: string;
+  visual?: SpeciesVisual;
 };
 
 export type AreaMetrics = {

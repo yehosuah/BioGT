@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import type { PickingInfo } from "@deck.gl/core";
+import type { Color, PickingInfo } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import type { DeckGLProps } from "@deck.gl/react";
@@ -81,6 +81,15 @@ const scopeLabels: Record<MapScopeType, string> = {
   public_hex: "Celda pública"
 };
 
+const searchResultTypeLabels: Record<SearchResult["type"], string> = {
+  species: "Especie",
+  area: "Área",
+  source: "Fuente"
+};
+
+const rgba = (red: number, green: number, blue: number, alpha: number): Color =>
+  [red, green, blue, alpha];
+
 const formatBBox = (bounds: {
   getWest: () => number;
   getSouth: () => number;
@@ -94,20 +103,84 @@ const formatBBox = (bounds: {
     bounds.getNorth().toFixed(4)
   ].join(",");
 
-async function fetchSummary(filters: MapFilters) {
+const isAbortError = (error: unknown) =>
+  error instanceof Error && error.name === "AbortError";
+
+const getDepartmentFillColor = ({
+  activeMode,
+  feature,
+  selected,
+  zoom
+}: {
+  activeMode: MapViewMode;
+  feature: { properties?: Record<string, unknown> };
+  selected: boolean;
+  zoom: number;
+}) => {
+  const speciesCount = Number(feature.properties?.speciesCount ?? 0);
+  if (activeMode !== "coverage") {
+    return selected ? rgba(42, 72, 79, 64) : rgba(92, 116, 118, 14);
+  }
+
+  if (selected) {
+    return rgba(32, 88, 88, 164);
+  }
+
+  if (speciesCount >= 320) {
+    return rgba(63, 111, 104, zoom < 6.8 ? 108 : 84);
+  }
+  if (speciesCount >= 220) {
+    return rgba(94, 133, 122, zoom < 6.8 ? 94 : 72);
+  }
+  if (speciesCount >= 140) {
+    return rgba(131, 161, 144, zoom < 6.8 ? 82 : 58);
+  }
+
+  return rgba(171, 190, 172, zoom < 6.8 ? 72 : 42);
+};
+
+const getPublicHexFillColor = ({
+  feature,
+  selected,
+  zoom
+}: {
+  feature: { properties?: Record<string, unknown> };
+  selected: boolean;
+  zoom: number;
+}) => {
+  const richness = Number(feature.properties?.speciesCount ?? 0);
+  if (selected) {
+    return rgba(46, 104, 83, 188);
+  }
+
+  if (richness >= 240) {
+    return rgba(70, 116, 92, zoom < 8 ? 120 : 152);
+  }
+  if (richness >= 160) {
+    return rgba(100, 138, 111, zoom < 8 ? 102 : 136);
+  }
+  if (richness >= 90) {
+    return rgba(132, 160, 135, zoom < 8 ? 88 : 118);
+  }
+
+  return rgba(169, 190, 170, zoom < 8 ? 74 : 102);
+};
+
+async function fetchSummary(filters: MapFilters, signal?: AbortSignal) {
   const query = filtersToQueryString(filters);
-  const response = await fetch(`/api/map/summary${query ? `?${query}` : ""}`);
+  const response = await fetch(`/api/map/summary${query ? `?${query}` : ""}`, { signal });
   return (await response.json()) as MapSummaryResponse;
 }
 
-async function fetchLayer(layer: LayerName, filters: MapFilters, bbox?: string) {
+async function fetchLayer(layer: LayerName, filters: MapFilters, bbox?: string, signal?: AbortSignal) {
   const params = new URLSearchParams(filtersToQueryString(filters));
   if (bbox) {
     params.set("bbox", bbox);
   }
 
   const response = await fetch(
-    `/api/map/layers/${layer}${params.toString() ? `?${params.toString()}` : ""}`
+    `/api/map/layers/${layer}${params.toString() ? `?${params.toString()}` : ""}`,
+    { signal }
   );
   return (await response.json()) as MapFeatureCollection;
 }
@@ -116,12 +189,14 @@ async function fetchPanel({
   filters,
   page,
   scope,
-  sort
+  sort,
+  signal
 }: {
   filters: MapFilters;
   page: number;
   scope: SelectionState;
   sort: MapSpeciesSort;
+  signal?: AbortSignal;
 }) {
   const params = new URLSearchParams(filtersToQueryString(filters));
   params.set("scopeType", scope.scopeType);
@@ -129,13 +204,13 @@ async function fetchPanel({
   params.set("sort", sort);
   params.set("page", String(page));
   params.set("pageSize", "6");
-  const response = await fetch(`/api/map/panel?${params.toString()}`);
+  const response = await fetch(`/api/map/panel?${params.toString()}`, { signal });
   return (await response.json()) as MapPanelResponse;
 }
 
-async function fetchSpeciesPanel(filters: MapFilters) {
+async function fetchSpeciesPanel(filters: MapFilters, signal?: AbortSignal) {
   const params = new URLSearchParams(filtersToQueryString(filters));
-  const response = await fetch(`/api/map/species-panel?${params.toString()}`);
+  const response = await fetch(`/api/map/species-panel?${params.toString()}`, { signal });
   return (await response.json()) as MapSpeciesPanelResponse;
 }
 
@@ -143,12 +218,14 @@ async function fetchMarkers({
   mode,
   filters,
   bbox,
-  scope
+  scope,
+  signal
 }: {
   mode: MapMarkerMode;
   filters: MapFilters;
   bbox?: string;
   scope: SelectionState;
+  signal?: AbortSignal;
 }) {
   const params = new URLSearchParams(filtersToQueryString(filters));
   params.set("mode", mode);
@@ -158,12 +235,12 @@ async function fetchMarkers({
     params.set("bbox", bbox);
   }
 
-  const response = await fetch(`/api/map/markers?${params.toString()}`);
+  const response = await fetch(`/api/map/markers?${params.toString()}`, { signal });
   return (await response.json()) as MapMarkerResponse;
 }
 
-async function fetchSearchResults(query: string) {
-  const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+async function fetchSearchResults(query: string, signal?: AbortSignal) {
+  const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`, { signal });
   return ((await response.json()) as { results: SearchResult[] }).results;
 }
 
@@ -258,44 +335,66 @@ export function MapExplorer() {
   const activeTaxonScope: TaxonScope = deferredFilters.taxonScope ?? "all";
   const activeTaxonSlug =
     deferredFilters.taxonSlug ?? speciesPanel?.focusSpecies.slug ?? panel?.species[0]?.slug;
+  const showRichnessCells =
+    activeMode === "coverage" && (zoom >= 7.15 || selection.scopeType !== "country");
 
   useEffect(() => {
+    const controller = new AbortController();
+
     void (async () => {
-      setSummary(await fetchSummary(deferredFilters));
+      try {
+        setSummary(await fetchSummary(deferredFilters, controller.signal));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
     })();
+
+    return () => controller.abort();
   }, [deferredFilters]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     void (async () => {
-      if (activeMode === "species") {
-        const [departments, protectedAreas, speciesPresence] = await Promise.all([
-          fetchLayer("departments", deferredFilters, bbox),
-          fetchLayer("protected_areas", deferredFilters, bbox),
-          fetchLayer("species_presence", deferredFilters, bbox)
+      try {
+        if (activeMode === "species") {
+          const [departments, protectedAreas, speciesPresence] = await Promise.all([
+            fetchLayer("departments", deferredFilters, bbox, controller.signal),
+            fetchLayer("protected_areas", deferredFilters, bbox, controller.signal),
+            fetchLayer("species_presence", deferredFilters, bbox, controller.signal)
+          ]);
+
+          setLayers({
+            departments,
+            protected_areas: protectedAreas,
+            public_hex: undefined,
+            species_presence: speciesPresence
+          });
+          return;
+        }
+
+        const [departments, protectedAreas, publicHex] = await Promise.all([
+          fetchLayer("departments", deferredFilters, bbox, controller.signal),
+          fetchLayer("protected_areas", deferredFilters, bbox, controller.signal),
+          fetchLayer("public_hex", deferredFilters, bbox, controller.signal)
         ]);
 
         setLayers({
           departments,
           protected_areas: protectedAreas,
-          public_hex: undefined,
-          species_presence: speciesPresence
+          public_hex: publicHex,
+          species_presence: undefined
         });
-        return;
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
       }
-
-      const [departments, protectedAreas, publicHex] = await Promise.all([
-        fetchLayer("departments", deferredFilters, bbox),
-        fetchLayer("protected_areas", deferredFilters, bbox),
-        fetchLayer("public_hex", deferredFilters, bbox)
-      ]);
-
-      setLayers({
-        departments,
-        protected_areas: protectedAreas,
-        public_hex: publicHex,
-        species_presence: undefined
-      });
     })();
+
+    return () => controller.abort();
   }, [activeMode, bbox, deferredFilters]);
 
   useEffect(() => {
@@ -303,16 +402,27 @@ export function MapExplorer() {
       return;
     }
 
+    const controller = new AbortController();
+
     void (async () => {
-      setPanel(
-        await fetchPanel({
-          filters: deferredFilters,
-          page,
-          scope: deferredSelection,
-          sort: deferredSort
-        })
-      );
+      try {
+        setPanel(
+          await fetchPanel({
+            filters: deferredFilters,
+            page,
+            scope: deferredSelection,
+            sort: deferredSort,
+            signal: controller.signal
+          })
+        );
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
     })();
+
+    return () => controller.abort();
   }, [activeMode, deferredFilters, deferredSelection, deferredSort, page]);
 
   useEffect(() => {
@@ -320,30 +430,51 @@ export function MapExplorer() {
       return;
     }
 
+    const controller = new AbortController();
+
     void (async () => {
-      setSpeciesPanel(await fetchSpeciesPanel(deferredFilters));
+      try {
+        setSpeciesPanel(await fetchSpeciesPanel(deferredFilters, controller.signal));
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
     })();
+
+    return () => controller.abort();
   }, [activeMode, deferredFilters]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     void (async () => {
-      const nextFilters =
-        activeMode === "species" && activeTaxonSlug
-          ? {
-              ...deferredFilters,
-              taxonSlug: activeTaxonSlug
-            }
-          : deferredFilters;
+      try {
+        const nextFilters =
+          activeMode === "species" && activeTaxonSlug
+            ? {
+                ...deferredFilters,
+                taxonSlug: activeTaxonSlug
+              }
+            : deferredFilters;
 
-      const response = await fetchMarkers({
-        mode: activeMode === "species" ? "species_presence" : "coverage_preview",
-        filters: nextFilters,
-        bbox,
-        scope: deferredSelection
-      });
+        const response = await fetchMarkers({
+          mode: activeMode === "species" ? "species_presence" : "coverage_preview",
+          filters: nextFilters,
+          bbox,
+          scope: deferredSelection,
+          signal: controller.signal
+        });
 
-      setMarkers(response.markers);
+        setMarkers(response.markers);
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error(error);
+        }
+      }
     })();
+
+    return () => controller.abort();
   }, [activeMode, activeTaxonSlug, bbox, deferredFilters, deferredSelection]);
 
   useEffect(() => {
@@ -352,13 +483,23 @@ export function MapExplorer() {
       return;
     }
 
+    const controller = new AbortController();
     const timeout = window.setTimeout(() => {
       void (async () => {
-        setSearchResults(await fetchSearchResults(searchQuery));
+        try {
+          setSearchResults(await fetchSearchResults(searchQuery, controller.signal));
+        } catch (error) {
+          if (!isAbortError(error)) {
+            console.error(error);
+          }
+        }
       })();
     }, 180);
 
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [searchQuery]);
 
   const deckLayers = useMemo(() => {
@@ -376,15 +517,16 @@ export function MapExplorer() {
       visible: layerVisibility.departments,
       lineWidthMinPixels: 1,
       getLineWidth: (feature: { properties?: Record<string, unknown> }) =>
-        selectedMatches(feature) ? 3.4 : 1.2,
+        selectedMatches(feature) ? 3 : 1.1,
       getFillColor: (feature) =>
-        activeMode === "coverage"
-          ? selectedMatches(feature)
-            ? [42, 96, 111, 118]
-            : [64, 109, 122, zoom < 6.9 ? 34 : 18]
-          : [64, 109, 122, 8],
+        getDepartmentFillColor({
+          activeMode,
+          feature,
+          selected: selectedMatches(feature),
+          zoom
+        }),
       getLineColor: (feature) =>
-        selectedMatches(feature) ? [17, 48, 58, 230] : [87, 112, 118, 144]
+        selectedMatches(feature) ? [24, 58, 59, 230] : [95, 118, 111, 148]
     });
 
     const protectedLayer = new GeoJsonLayer({
@@ -397,37 +539,35 @@ export function MapExplorer() {
       visible: layerVisibility.protectedAreas,
       lineWidthMinPixels: 1,
       getLineWidth: (feature: { properties?: Record<string, unknown> }) =>
-        selectedMatches(feature) ? 2.8 : 1.2,
+        selectedMatches(feature) ? 2.6 : 1.15,
       getFillColor: (feature) =>
         selectedMatches(feature)
-          ? [224, 188, 116, 174]
+          ? [184, 154, 86, 150]
           : activeMode === "species"
-            ? [203, 182, 128, 26]
-            : [214, 191, 140, zoom >= 7 ? 74 : 34],
+            ? [187, 168, 116, 18]
+            : [200, 183, 132, zoom >= 7 ? 58 : 26],
       getLineColor: (feature) =>
-        selectedMatches(feature) ? [101, 76, 31, 220] : [142, 119, 74, 160]
+        selectedMatches(feature) ? [112, 84, 33, 220] : [145, 122, 72, 156]
     });
 
     const richnessLayer = new GeoJsonLayer({
       id: "public-hex",
       data: layers.public_hex,
       filled: true,
-      pickable: activeMode === "coverage" && layerVisibility.publicHex,
+      pickable: activeMode === "coverage" && layerVisibility.publicHex && showRichnessCells,
       stroked: true,
-      visible: activeMode === "coverage" && layerVisibility.publicHex,
+      visible: showRichnessCells && layerVisibility.publicHex,
       lineWidthMinPixels: 1,
       getLineWidth: (feature: { properties?: Record<string, unknown> }) =>
-        selectedMatches(feature) ? 2.4 : 0.8,
-      getFillColor: (feature) => {
-        const richness = Number(feature.properties?.speciesCount ?? 0);
-        const alpha = zoom < 6.8 ? 84 : zoom < 8 ? 118 : 154;
-        const red = Math.min(230, 108 + richness * 14);
-        return selectedMatches(feature)
-          ? [240, 133, 92, 188]
-          : [red, 128, 101, alpha];
-      },
+        selectedMatches(feature) ? 2 : 0.72,
+      getFillColor: (feature) =>
+        getPublicHexFillColor({
+          feature,
+          selected: selectedMatches(feature),
+          zoom
+        }),
       getLineColor: (feature) =>
-        selectedMatches(feature) ? [125, 62, 41, 255] : [151, 102, 81, 98]
+        selectedMatches(feature) ? [33, 78, 63, 235] : [91, 116, 99, 88]
     });
 
     const speciesPresenceLayer = new GeoJsonLayer({
@@ -446,7 +586,7 @@ export function MapExplorer() {
     return activeMode === "species"
       ? [departmentLayer, protectedLayer, speciesPresenceLayer]
       : [departmentLayer, protectedLayer, richnessLayer];
-  }, [activeMode, layerVisibility, layers, selection, zoom]);
+  }, [activeMode, layerVisibility, layers, selection, showRichnessCells, zoom]);
 
   const updateFilter = (key: keyof MapFilters, value: string | boolean | undefined) => {
     startTransition(() => {
@@ -544,7 +684,10 @@ export function MapExplorer() {
 
     if (result.type === "species") {
       const nextSpecies = panel?.species.find((species) => species.slug === result.slug);
-      activateSpeciesMode(result.slug, nextSpecies && isFloraGroup(nextSpecies.group) ? "flora" : "fauna");
+      activateSpeciesMode(
+        result.slug,
+        nextSpecies ? (isFloraGroup(nextSpecies.group) ? "flora" : "fauna") : "all"
+      );
       return;
     }
 
@@ -624,8 +767,8 @@ export function MapExplorer() {
   const coverageScopeLabel = formatScopeEyebrow(panel?.selection.scopeType ?? selection.scopeType);
   const activeModeCopy =
     activeMode === "coverage"
-      ? "Explora territorios, compara riqueza pública y entra a especies representativas."
-      : "Sigue una especie específica con presencia pública generalizada y cambia entre celdas o áreas.";
+      ? "Explora territorios primero; las celdas públicas aparecen al acercar o al entrar en una región."
+      : "Sigue una especie puntual con presencia generalizada y vuelve al territorio desde cada zona.";
 
   return (
     <div className="atlas-workspace">
@@ -655,7 +798,7 @@ export function MapExplorer() {
                   >
                     <strong>{result.title}</strong>
                     <span>
-                      {result.type} · {result.subtitle}
+                      {searchResultTypeLabels[result.type]} · {result.subtitle}
                     </span>
                   </button>
                 ))}
@@ -663,46 +806,45 @@ export function MapExplorer() {
             ) : null}
           </div>
 
-          <div className="atlas-mode-switch" role="tablist" aria-label="Modo del mapa">
-            <button
-              className={activeMode === "coverage" ? "is-active" : undefined}
-              onClick={() => switchMode("coverage")}
-              type="button"
-            >
-              Cobertura
-            </button>
-            <button
-              className={activeMode === "species" ? "is-active" : undefined}
-              onClick={() => switchMode("species")}
-              type="button"
-            >
-              Especie
-            </button>
+          <div className="atlas-topbar-chips">
+            <div className="atlas-mode-switch" role="tablist" aria-label="Modo del mapa">
+              <button
+                className={activeMode === "coverage" ? "is-active" : undefined}
+                onClick={() => switchMode("coverage")}
+                type="button"
+              >
+                Cobertura
+              </button>
+              <button
+                className={activeMode === "species" ? "is-active" : undefined}
+                onClick={() => switchMode("species")}
+                type="button"
+              >
+                Especie
+              </button>
+            </div>
+
+            <div className="atlas-scope-toggle" role="tablist" aria-label="Cobertura taxonómica">
+              {(["all", "flora", "fauna"] as TaxonScope[]).map((scope) => (
+                <button
+                  className={activeTaxonScope === scope ? "is-active" : undefined}
+                  key={scope}
+                  onClick={() => updateFilter("taxonScope", scope)}
+                  type="button"
+                >
+                  {scope === "all" ? "Todo" : scope}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       <aside className="atlas-filter-rail">
         <section className="atlas-rail-section">
-          <p className="atlas-section-label">Cobertura taxonómica</p>
-          <div className="atlas-scope-toggle" role="tablist" aria-label="Cobertura taxonómica">
-            {(["all", "flora", "fauna"] as TaxonScope[]).map((scope) => (
-              <button
-                className={activeTaxonScope === scope ? "is-active" : undefined}
-                key={scope}
-                onClick={() => updateFilter("taxonScope", scope)}
-                type="button"
-              >
-                {scope === "all" ? "Todo" : scope}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="atlas-rail-section">
           <div className="atlas-rail-section-head">
             <div>
-              <p className="atlas-section-label">Selección</p>
+              <p className="atlas-section-label">Enfoque</p>
               <strong>{coveragePanelTitle}</strong>
             </div>
             <button className="atlas-reset-link" onClick={resetExplorer} type="button">
@@ -713,8 +855,8 @@ export function MapExplorer() {
         </section>
 
         <section className="atlas-rail-section">
-          <p className="atlas-section-label">Filtros</p>
-          <div className="atlas-filter-grid">
+          <p className="atlas-section-label">Filtros rápidos</p>
+          <div className="atlas-filter-grid atlas-filter-grid-compact">
             <label>
               Región
               <select value={filters.region} onChange={(event) => updateRegion(event.target.value)}>
@@ -741,48 +883,6 @@ export function MapExplorer() {
               </select>
             </label>
 
-            <label>
-              Fuente
-              <select
-                value={filters.sourceTier}
-                onChange={(event) => updateFilter("sourceTier", event.target.value)}
-              >
-                {(summary?.filterOptions.sourceTiers ?? ["all"]).map((tier) => (
-                  <option key={tier} value={tier}>
-                    {tier}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Elevación
-              <select
-                value={filters.elevationBand}
-                onChange={(event) => updateFilter("elevationBand", event.target.value)}
-              >
-                {(summary?.filterOptions.elevationBands ?? ["all"]).map((band) => (
-                  <option key={band} value={band}>
-                    {band}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Tiempo
-              <select
-                value={filters.dateRange}
-                onChange={(event) => updateFilter("dateRange", event.target.value)}
-              >
-                {(summary?.filterOptions.dateRanges ?? ["all"]).map((range) => (
-                  <option key={range} value={range}>
-                    {range}
-                  </option>
-                ))}
-              </select>
-            </label>
-
             <label className="atlas-toggle-row atlas-toggle-inline">
               <input
                 checked={filters.protectedOnly ?? false}
@@ -794,63 +894,111 @@ export function MapExplorer() {
           </div>
         </section>
 
-        <section className="atlas-rail-section">
-          <p className="atlas-section-label">Capas del mapa</p>
-          <div className="atlas-layer-list">
-            <label className="atlas-toggle-row">
-              <input
-                checked={layerVisibility.departments}
-                onChange={(event) => updateLayerVisibility("departments", event.target.checked)}
-                type="checkbox"
-              />
-              <span>Departamentos</span>
-            </label>
-            <label className="atlas-toggle-row">
-              <input
-                checked={layerVisibility.protectedAreas}
-                onChange={(event) => updateLayerVisibility("protectedAreas", event.target.checked)}
-                type="checkbox"
-              />
-              <span>Áreas protegidas</span>
-            </label>
-            {activeMode === "coverage" ? (
-              <label className="atlas-toggle-row">
-                <input
-                  checked={layerVisibility.publicHex}
-                  onChange={(event) => updateLayerVisibility("publicHex", event.target.checked)}
-                  type="checkbox"
-                />
-                <span>Riqueza pública</span>
+        <details className="atlas-detail-group">
+          <summary>Filtros avanzados</summary>
+          <div className="atlas-detail-body">
+            <div className="atlas-filter-grid">
+              <label>
+                Fuente
+                <select
+                  value={filters.sourceTier}
+                  onChange={(event) => updateFilter("sourceTier", event.target.value)}
+                >
+                  {(summary?.filterOptions.sourceTiers ?? ["all"]).map((tier) => (
+                    <option key={tier} value={tier}>
+                      {tier}
+                    </option>
+                  ))}
+                </select>
               </label>
-            ) : (
-              <label className="atlas-toggle-row">
-                <input
-                  checked={layerVisibility.speciesPresence}
-                  onChange={(event) => updateLayerVisibility("speciesPresence", event.target.checked)}
-                  type="checkbox"
-                />
-                <span>Presencia pública</span>
-              </label>
-            )}
-            <label className="atlas-toggle-row">
-              <input
-                checked={layerVisibility.markers}
-                onChange={(event) => updateLayerVisibility("markers", event.target.checked)}
-                type="checkbox"
-              />
-              <span>{activeMode === "coverage" ? "Especies destacadas" : "Marcadores de especie"}</span>
-            </label>
-          </div>
-        </section>
 
-        <section className="atlas-rail-section">
-          <p className="atlas-section-label">Contexto público</p>
-          <div className="atlas-note-stack">
-            <span className="atlas-inline-note">{summary?.sourceMeta.canonicalLabel}</span>
-            <span className="atlas-inline-note">{summary?.sourceMeta.confidenceLabel}</span>
-            <span className="atlas-inline-note">{summary?.sourceMeta.optionalOverlayLabel}</span>
+              <label>
+                Elevación
+                <select
+                  value={filters.elevationBand}
+                  onChange={(event) => updateFilter("elevationBand", event.target.value)}
+                >
+                  {(summary?.filterOptions.elevationBands ?? ["all"]).map((band) => (
+                    <option key={band} value={band}>
+                      {band}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Tiempo
+                <select
+                  value={filters.dateRange}
+                  onChange={(event) => updateFilter("dateRange", event.target.value)}
+                >
+                  {(summary?.filterOptions.dateRanges ?? ["all"]).map((range) => (
+                    <option key={range} value={range}>
+                      {range}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
-        </section>
+        </details>
+
+        <details className="atlas-detail-group">
+          <summary>Capas y procedencia</summary>
+          <div className="atlas-detail-body">
+            <div className="atlas-layer-list">
+              <label className="atlas-toggle-row">
+                <input
+                  checked={layerVisibility.departments}
+                  onChange={(event) => updateLayerVisibility("departments", event.target.checked)}
+                  type="checkbox"
+                />
+                <span>Departamentos</span>
+              </label>
+              <label className="atlas-toggle-row">
+                <input
+                  checked={layerVisibility.protectedAreas}
+                  onChange={(event) => updateLayerVisibility("protectedAreas", event.target.checked)}
+                  type="checkbox"
+                />
+                <span>Áreas protegidas</span>
+              </label>
+              {activeMode === "coverage" ? (
+                <label className="atlas-toggle-row">
+                  <input
+                    checked={layerVisibility.publicHex}
+                    onChange={(event) => updateLayerVisibility("publicHex", event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>Celdas generalizadas</span>
+                </label>
+              ) : (
+                <label className="atlas-toggle-row">
+                  <input
+                    checked={layerVisibility.speciesPresence}
+                    onChange={(event) => updateLayerVisibility("speciesPresence", event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>Presencia pública</span>
+                </label>
+              )}
+              <label className="atlas-toggle-row">
+                <input
+                  checked={layerVisibility.markers}
+                  onChange={(event) => updateLayerVisibility("markers", event.target.checked)}
+                  type="checkbox"
+                />
+                <span>{activeMode === "coverage" ? "Especies destacadas" : "Marcadores de especie"}</span>
+              </label>
+            </div>
+
+            <div className="atlas-note-stack">
+              <span className="atlas-inline-note">{summary?.sourceMeta.canonicalLabel}</span>
+              <span className="atlas-inline-note">{summary?.sourceMeta.confidenceLabel}</span>
+              <span className="atlas-inline-note">{summary?.sourceMeta.optionalOverlayLabel}</span>
+            </div>
+          </div>
+        </details>
       </aside>
 
       <section className="atlas-stage">
@@ -861,6 +1009,11 @@ export function MapExplorer() {
               <span>{coveragePanelTitle}</span>
             </p>
             <p>{summary?.title ?? "BioGT / Atlas vivo de Guatemala"}</p>
+            <p className="atlas-stage-hint">
+              {showRichnessCells
+                ? "Celdas generalizadas activas para lectura fina."
+                : "Vista amplia con máscara geográfica por departamento. Acerca el mapa para ver celdas públicas."}
+            </p>
           </div>
           <div className="atlas-stage-metrics">
             <div>
@@ -929,10 +1082,16 @@ export function MapExplorer() {
               : null}
           </Map>
 
+          {activeMode === "coverage" && !showRichnessCells ? (
+            <div className="atlas-map-note">
+              Celdas públicas ocultas a esta escala para priorizar máscara geográfica real.
+            </div>
+          ) : null}
+
           <div className="atlas-map-legend">
             <span className="legend-item">
               <i className="legend-swatch legend-department" />
-              Departamentos
+              Máscara departamental
             </span>
             <span className="legend-item">
               <i className="legend-swatch legend-protected" />
@@ -942,7 +1101,7 @@ export function MapExplorer() {
               <>
                 <span className="legend-item">
                   <i className="legend-swatch legend-public" />
-                  Riqueza pública
+                  Celdas generalizadas
                 </span>
                 <span className="legend-item">
                   <i className="legend-swatch legend-marker" />

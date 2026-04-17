@@ -14,9 +14,14 @@ export function MapSpeciesCard({
   onAction?: () => void;
   hrefLabel?: string;
 }) {
+  const groupLabel = species.group.replaceAll("-", " ");
+
   return (
     <article className="map-species-card">
-      <div className="map-species-visual" style={{ backgroundImage: species.visual.accent }}>
+      <div
+        className="map-species-visual"
+        style={species.visual.kind === "photo" && species.visual.src ? undefined : { background: species.visual.accent }}
+      >
         {species.visual.kind === "photo" && species.visual.src ? (
           <img alt={species.visual.alt} src={species.visual.src} />
         ) : (
@@ -28,7 +33,7 @@ export function MapSpeciesCard({
 
       <div className="map-species-body">
         <div className="map-species-header">
-          <span className="entity-card-eyebrow">{species.group}</span>
+          <span className="entity-card-eyebrow">{groupLabel}</span>
           <strong>{species.commonName}</strong>
           <em>{species.scientificName}</em>
         </div>
@@ -62,14 +67,16 @@ export function MapSpeciesCard({
           )}
         </div>
 
-        <Link className="entity-card-link" href={species.href}>
-          {hrefLabel}
-        </Link>
-        {actionLabel && onAction ? (
-          <button className="map-species-action" onClick={onAction} type="button">
-            {actionLabel}
-          </button>
-        ) : null}
+        <div className="map-species-actions">
+          <Link className="entity-card-link" href={species.href}>
+            {hrefLabel}
+          </Link>
+          {actionLabel && onAction ? (
+            <button className="map-species-action" onClick={onAction} type="button">
+              {actionLabel}
+            </button>
+          ) : null}
+        </div>
       </div>
     </article>
   );

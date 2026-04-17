@@ -88,4 +88,42 @@ describe("database-backed species media", () => {
       sourceName: "Portal de Biodiversidad de Guatemala"
     });
   });
+
+  it("surfaces taxon_media rows through listSpecies visuals", async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          id: "basiliscus-vittatus",
+          slug: "basiliscus-vittatus",
+          common_name: "Basiliscus vittatus",
+          scientific_name: "Basiliscus vittatus",
+          taxonomic_group: "reptiles",
+          status: "",
+          endemism: "",
+          summary: "",
+          hero_metric: "",
+          presence_area_ids: [],
+          source_ids: ["biodiversidad-gt"],
+          source_tiers: ["institutional"],
+          media_url: "https://example.com/basiliscus-medium.jpg",
+          media_alt_text: "Basiliscus vittatus",
+          media_attribution: "Ricard Busquets Reverte",
+          media_license: "https://creativecommons.org/licenses/by/4.0/",
+          media_source_name: "Portal de Biodiversidad de Guatemala"
+        }
+      ]
+    });
+
+    const { listSpecies } = await import("@/lib/repository");
+    const species = await listSpecies();
+
+    expect(mockEnsureAtlasBootstrap).toHaveBeenCalled();
+    expect(species[0]?.visual).toMatchObject({
+      kind: "photo",
+      src: "https://example.com/basiliscus-medium.jpg",
+      attribution: "Ricard Busquets Reverte",
+      license: "https://creativecommons.org/licenses/by/4.0/",
+      sourceName: "Portal de Biodiversidad de Guatemala"
+    });
+  });
 });

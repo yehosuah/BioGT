@@ -86,6 +86,11 @@ type SpeciesRow = {
   presence_area_ids: string[];
   source_ids: string[];
   source_tiers: SourceTier[];
+  media_url: string | null;
+  media_alt_text: string | null;
+  media_attribution: string | null;
+  media_license: string | null;
+  media_source_name: string | null;
 };
 
 type MapSpeciesRow = {
@@ -228,7 +233,16 @@ const mapSpeciesRow = (row: SpeciesRow): SpeciesRecord => ({
   presenceAreaIds: row.presence_area_ids ?? [],
   sourceIds: row.source_ids ?? [],
   sourceTiers: row.source_tiers ?? [],
-  heroMetric: row.hero_metric ?? ""
+  heroMetric: row.hero_metric ?? "",
+  visual: buildVisual({
+    alt: row.media_alt_text,
+    commonName: row.common_name,
+    group: row.taxonomic_group,
+    license: row.media_license,
+    sourceName: row.media_source_name,
+    src: row.media_url,
+    attribution: row.media_attribution
+  })
 });
 
 const areaBaseQuery = `
@@ -269,6 +283,14 @@ const speciesBaseQuery = `
   from taxa taxon
   left join occurrences_normalized occ on occ.taxon_id = taxon.id
   left join areas_protected pa on pa.id = occ.area_protected_id
+  left join lateral (
+    select url, alt_text, attribution, license, source_id
+    from taxon_media media
+    where media.taxon_id = taxon.id
+    order by media.is_primary desc, media.sort_order asc, media.created_at asc
+    limit 1
+  ) media on true
+  left join sources media_source on media_source.id = media.source_id
   left join entity_source_links esl
     on esl.entity_type = 'species'
    and esl.entity_ref = taxon.slug
@@ -453,7 +475,19 @@ const withSourceTiers = <T extends { sourceIds: string[]; sourceTiers?: SourceTi
 
 const listDemoAreas = (): AreaRecord[] => demoAreas.map((area) => withSourceTiers(area));
 
-const listDemoSpecies = (): SpeciesRecord[] => demoSpecies.map((entry) => withSourceTiers(entry));
+const listDemoSpecies = (): SpeciesRecord[] =>
+  demoSpecies.map((entry) => {
+    const next = withSourceTiers(entry);
+    return {
+      ...next,
+      visual:
+        next.visual ??
+        buildVisual({
+          commonName: next.commonName,
+          group: next.group
+        })
+    };
+  });
 
 const getDemoFilteredOccurrences = (filters: MapFilters = {}) => {
   const speciesById = new Map(listDemoSpecies().map((entry) => [entry.id, entry]));
@@ -923,7 +957,12 @@ export const listSpecies = cache(async (): Promise<SpeciesRecord[]> => {
         taxon.hero_metric,
         coalesce(array_agg(distinct pa.slug) filter (where pa.slug is not null), '{}') as presence_area_ids,
         coalesce(array_agg(distinct esl.source_id) filter (where esl.source_id is not null), '{}') as source_ids,
-        coalesce(array_agg(distinct src.tier::text) filter (where src.tier is not null), '{}') as source_tiers
+        coalesce(array_agg(distinct src.tier::text) filter (where src.tier is not null), '{}') as source_tiers,
+        media.url as media_url,
+        media.alt_text as media_alt_text,
+        media.attribution as media_attribution,
+        media.license as media_license,
+        media_source.name as media_source_name
         ${speciesBaseQuery}
       group by
         taxon.id,
@@ -935,6 +974,11 @@ export const listSpecies = cache(async (): Promise<SpeciesRecord[]> => {
         taxon.endemism,
         taxon.summary,
         taxon.hero_metric,
+        media.url,
+        media.alt_text,
+        media.attribution,
+        media.license,
+        media_source.name,
         taxon.featured_rank
       order by taxon.featured_rank asc, taxon.common_name asc
     `
@@ -989,11 +1033,24 @@ export const getAreaSpecies = cache(async (areaSlug: string): Promise<SpeciesRec
         taxon.hero_metric,
         coalesce(array_agg(distinct pa.slug) filter (where pa.slug is not null), '{}') as presence_area_ids,
         coalesce(array_agg(distinct esl.source_id) filter (where esl.source_id is not null), '{}') as source_ids,
-        coalesce(array_agg(distinct src.tier::text) filter (where src.tier is not null), '{}') as source_tiers
+        coalesce(array_agg(distinct src.tier::text) filter (where src.tier is not null), '{}') as source_tiers,
+        media.url as media_url,
+        media.alt_text as media_alt_text,
+        media.attribution as media_attribution,
+        media.license as media_license,
+        media_source.name as media_source_name
       from taxa taxon
       join occurrences_normalized occ on occ.taxon_id = taxon.id
       left join areas_admin dept on dept.id = occ.area_admin_id
       left join areas_protected pa on pa.id = occ.area_protected_id
+      left join lateral (
+        select url, alt_text, attribution, license, source_id
+        from taxon_media media
+        where media.taxon_id = taxon.id
+        order by media.is_primary desc, media.sort_order asc, media.created_at asc
+        limit 1
+      ) media on true
+      left join sources media_source on media_source.id = media.source_id
       left join entity_source_links esl
         on esl.entity_type = 'species'
        and esl.entity_ref = taxon.slug
@@ -1009,6 +1066,11 @@ export const getAreaSpecies = cache(async (areaSlug: string): Promise<SpeciesRec
         taxon.endemism,
         taxon.summary,
         taxon.hero_metric,
+        media.url,
+        media.alt_text,
+        media.attribution,
+        media.license,
+        media_source.name,
         taxon.featured_rank
       order by taxon.featured_rank asc, taxon.common_name asc
     `,
