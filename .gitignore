@@ -1,0 +1,14 @@
+node_modules
+.next
+dist
+coverage
+__pycache__
+.pytest_cache
+.DS_Store
+.env.local
+.env
+.venv
+.etl-venv
+*.pyc
+*.pyo
+*.pyd

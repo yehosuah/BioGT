@@ -1,0 +1,12 @@
+.git
+.gitignore
+.DS_Store
+node_modules
+.venv
+apps/web/.next
+apps/web/node_modules
+apps/web/tsconfig.tsbuildinfo
+workers/etl/src/biomap_gt_etl.egg-info
+workers/etl/src/biomap_gt_etl/__pycache__
+workers/etl/tests/__pycache__
+tmp

@@ -1,0 +1,25 @@
+{
+  "name": "biogt",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @biogt/web",
+    "build": "npm run build --workspace @biogt/web",
+    "lint": "npm run lint --workspace @biogt/web",
+    "typecheck": "npm run typecheck --workspace @biogt/web",
+    "data:populate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:${POSTGRES_HOST_PORT:-55432}/biogt} bash ./scripts/run-etl-python.sh -m biomap_gt_etl.cli load --replace-atlas-data",
+    "data:backfill-media": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:${POSTGRES_HOST_PORT:-55432}/biogt} bash ./scripts/run-etl-python.sh -m biomap_gt_etl.cli backfill-media",
+    "test": "vitest run && BIOGT_ETL_REQUIRE_PYTEST=1 bash ./scripts/run-etl-python.sh -m pytest workers/etl/tests",
+    "test:web": "vitest run",
+    "test:etl": "BIOGT_ETL_REQUIRE_PYTEST=1 bash ./scripts/run-etl-python.sh -m pytest workers/etl/tests"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

@@ -1,0 +1,5 @@
+psycopg[binary]>=3.2.9
+
+[dev]
+pytest>=8.4.2
+testcontainers>=4.13.2
