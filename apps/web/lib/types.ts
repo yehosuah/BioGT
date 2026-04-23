@@ -239,6 +239,12 @@ export type MapSpeciesMarker = {
 export type MapMarkerResponse = {
   mode: MapMarkerMode;
   markers: MapSpeciesMarker[];
+  meta: {
+    totalCount: number;
+    returnedCount: number;
+    clustered: boolean;
+    truncated: boolean;
+  };
 };
 
 export type MapPanelResponse = {

@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "hex-1",
+      "properties": {
+        "id": "hex-1",
+        "kind": "public_hex",
+        "label": "Celda 1",
+        "speciesCount": 92,
+        "protectedCount": 1,
+        "sourceCount": 2,
+        "biodiversityLabel": "92 especies"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-90.45, 15.35], [-90.25, 15.35], [-90.25, 15.55], [-90.45, 15.55], [-90.45, 15.35]]]
+      }
+    }
+  ]
+}

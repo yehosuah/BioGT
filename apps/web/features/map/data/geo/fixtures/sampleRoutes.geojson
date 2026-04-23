@@ -1,0 +1,71 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "route-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-90.5402, 14.6123],
+          [-90.5235, 14.6251],
+          [-90.5061, 14.6399]
+        ]
+      },
+      "properties": {
+        "id": "route-1",
+        "name": "Urban Corridor",
+        "category": "route",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "priority": "high",
+        "distanceKm": 4.8
+      }
+    },
+    {
+      "id": "route-2",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-90.5154, 14.6521],
+          [-90.4968, 14.6446],
+          [-90.4752, 14.6388]
+        ]
+      },
+      "properties": {
+        "id": "route-2",
+        "name": "Northern Connector",
+        "category": "route",
+        "status": "planned",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "priority": "medium",
+        "distanceKm": 5.2
+      }
+    },
+    {
+      "id": "route-3",
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-90.5298, 14.6062],
+          [-90.5091, 14.6144],
+          [-90.4847, 14.6235]
+        ]
+      },
+      "properties": {
+        "id": "route-3",
+        "name": "Southern Link",
+        "category": "route",
+        "status": "maintenance",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "priority": "low",
+        "distanceKm": 5.7
+      }
+    }
+  ]
+}

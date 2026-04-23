@@ -1,0 +1,52 @@
+{
+  "focusSpecies": {
+    "speciesId": "species-1",
+    "slug": "quetzal",
+    "commonName": "Quetzal",
+    "scientificName": "Pharomachrus mocinno",
+    "group": "aves",
+    "status": "Visible",
+    "endemism": "Regional",
+    "summary": "Public generalized presence.",
+    "heroMetric": "24 registros publicos",
+    "presenceCount": 24,
+    "latestObservedAt": "2026-04-01",
+    "sourceTiers": ["official"],
+    "quickFacts": [{ "label": "Cobertura", "value": "Alta Verapaz" }],
+    "visual": {
+      "kind": "fallback",
+      "src": null,
+      "alt": "Quetzal",
+      "attribution": null,
+      "license": null,
+      "sourceName": null,
+      "accent": "#406f68",
+      "fallbackLabel": "Q"
+    },
+    "href": "/species/quetzal"
+  },
+  "metrics": {
+    "visibleDepartments": 1,
+    "visibleProtectedAreas": 1,
+    "visibleCells": 1,
+    "activeSources": 1
+  },
+  "sourceMeta": {
+    "canonicalLabel": "Public fixture data",
+    "optionalOverlayLabel": "Fixture overlay",
+    "freshnessLabel": "Updated this week",
+    "confidenceLabel": "Stable QA sample"
+  },
+  "places": [
+    {
+      "scopeType": "department",
+      "scopeId": "alta-verapaz",
+      "title": "Alta Verapaz",
+      "subtitle": "Departamento",
+      "occurrenceCount": 24,
+      "latestObservedAt": "2026-04-01"
+    }
+  ],
+  "taxonScope": "fauna",
+  "viewMode": "species"
+}

@@ -1,0 +1,36 @@
+{
+  "mode": "coverage_preview",
+  "markers": [
+    {
+      "id": "marker-1",
+      "mode": "coverage_preview",
+      "speciesId": "species-1",
+      "slug": "quetzal",
+      "label": "Quetzal",
+      "scientificName": "Pharomachrus mocinno",
+      "group": "aves",
+      "occurrenceCount": 24,
+      "point": { "longitude": -90.5069, "latitude": 15.3349 },
+      "visual": {
+        "kind": "fallback",
+        "src": null,
+        "alt": "Quetzal",
+        "attribution": null,
+        "license": null,
+        "sourceName": null,
+        "accent": "#406f68",
+        "fallbackLabel": "Q"
+      },
+      "scopeRef": {
+        "scopeType": "department",
+        "scopeId": "alta-verapaz"
+      }
+    }
+  ],
+  "meta": {
+    "totalCount": 1,
+    "returnedCount": 1,
+    "clustered": false,
+    "truncated": false
+  }
+}

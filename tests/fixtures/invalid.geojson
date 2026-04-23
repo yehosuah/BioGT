@@ -1,0 +1,18 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "invalid-1",
+      "properties": {
+        "id": "invalid-1",
+        "name": "Broken fixture",
+        "category": "unknown",
+        "status": "broken",
+        "updatedAt": "2026-04-04",
+        "source": "fixture"
+      },
+      "geometry": null
+    }
+  ]
+}

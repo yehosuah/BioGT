@@ -138,6 +138,7 @@ type MarkerRow = {
   media_attribution: string | null;
   media_license: string | null;
   media_source_name: string | null;
+  total_count?: number;
 };
 
 type NationalSummary = {
@@ -2602,19 +2603,27 @@ export const getMapMarkers = async ({
   await ensureData();
 
   if (!isDatabaseConfigured()) {
+    const markers =
+      mode === "species_presence"
+        ? await getDemoSpeciesPresenceMarkers({
+            bbox,
+            filters
+          })
+        : await getDemoCoveragePreviewMarkers({
+            filters,
+            scopeId,
+            scopeType
+          });
+
     return {
       mode,
-      markers:
-        mode === "species_presence"
-          ? await getDemoSpeciesPresenceMarkers({
-              bbox,
-              filters
-            })
-          : await getDemoCoveragePreviewMarkers({
-              filters,
-              scopeId,
-              scopeType
-            })
+      markers,
+      meta: {
+        totalCount: markers.length,
+        returnedCount: markers.length,
+        clustered: false,
+        truncated: false
+      }
     };
   }
 
@@ -2697,7 +2706,8 @@ export const getMapMarkers = async ({
           media_alt_text,
           media_attribution,
           media_license,
-          media_source_name
+          media_source_name,
+          count(*) over()::int as total_count
         from ranked_hex
         where hex_rank = 1
         order by occurrence_count desc, common_name asc
@@ -2736,7 +2746,13 @@ export const getMapMarkers = async ({
             scopeId: row.scope_id
           }
         })
-      )
+      ),
+      meta: {
+        totalCount: Number(rows.rows[0]?.total_count ?? rows.rows.length),
+        returnedCount: rows.rows.length,
+        clustered: false,
+        truncated: Number(rows.rows[0]?.total_count ?? rows.rows.length) > rows.rows.length
+      }
     };
   }
 
@@ -2744,7 +2760,13 @@ export const getMapMarkers = async ({
   if (!activeSpecies) {
     return {
       mode,
-      markers: []
+      markers: [],
+      meta: {
+        totalCount: 0,
+        returnedCount: 0,
+        clustered: false,
+        truncated: false
+      }
     };
   }
 
@@ -2772,7 +2794,8 @@ export const getMapMarkers = async ({
         media.alt_text as media_alt_text,
         media.attribution as media_attribution,
         media.license as media_license,
-        media_source.name as media_source_name
+        media_source.name as media_source_name,
+        count(*) over()::int as total_count
       from occurrences_public pub
       join occurrences_normalized occ on occ.id = pub.normalized_occurrence_id
       join taxa taxon on taxon.id = occ.taxon_id
@@ -2836,6 +2859,12 @@ export const getMapMarkers = async ({
           scopeId: row.scope_id
         }
       })
-    )
+    ),
+    meta: {
+      totalCount: Number(rows.rows[0]?.total_count ?? rows.rows.length),
+      returnedCount: rows.rows.length,
+      clustered: false,
+      truncated: Number(rows.rows[0]?.total_count ?? rows.rows.length) > rows.rows.length
+    }
   };
 };

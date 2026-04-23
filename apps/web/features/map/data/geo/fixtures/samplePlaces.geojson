@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "place-restaurant-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.5132, 14.6345]
+      },
+      "properties": {
+        "id": "place-restaurant-1",
+        "name": "Mercado Bistro",
+        "category": "restaurant",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "place-park-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.5008, 14.6407]
+      },
+      "properties": {
+        "id": "place-park-1",
+        "name": "Bosque Central",
+        "category": "park",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "place-store-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.4887, 14.6268]
+      },
+      "properties": {
+        "id": "place-store-1",
+        "name": "Supply House",
+        "category": "store",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "place-school-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.4785, 14.6484]
+      },
+      "properties": {
+        "id": "place-school-1",
+        "name": "Colegio Norte",
+        "category": "school",
+        "status": "planned",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "place-hospital-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-90.5217, 14.6215]
+      },
+      "properties": {
+        "id": "place-hospital-1",
+        "name": "Clinca Regional Uno",
+        "category": "hospital",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z"
+      }
+    }
+  ]
+}

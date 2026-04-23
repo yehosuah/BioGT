@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "presence-quetzal",
+      "properties": {
+        "id": "presence-quetzal",
+        "kind": "species_presence",
+        "label": "Presencia quetzal",
+        "speciesCount": 1
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-90.62, 15.18], [-90.34, 15.18], [-90.34, 15.46], [-90.62, 15.46], [-90.62, 15.18]]]
+      }
+    }
+  ]
+}

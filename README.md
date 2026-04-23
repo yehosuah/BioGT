@@ -80,10 +80,16 @@ npm run test
 docker compose up --build
 ```
 
+## Deployment
+
+- Production checklist: [docs/deployment/production-checklist.md](/Users/yehosuahercules/Desktop/Misc./BioGT/docs/deployment/production-checklist.md)
+- Map security and provider restrictions: [docs/deployment/map-security.md](/Users/yehosuahercules/Desktop/Misc./BioGT/docs/deployment/map-security.md)
+
 ## Notes
 
 - Phase 1 intentionally ships with citations and source links only; no platform-hosted occurrence exports.
 - Exact sensitive coordinates are never served from the public APIs.
+- Phase 2 map-data architecture lives under `apps/web/features/map/data/geo`, with GeoJSON as canonical renderer-facing format and fixtures/docs in `docs/map-data-architecture.md`.
 - Bootstrap demo fixtures are now intended only for explicit local fallback via `BIOGT_BOOTSTRAP_DEMO_DATA=true`; the default runtime should target DB-backed public biodiversity data.
 - The new loader imports all published Biodiversidad.gt DwC-A archives by default, reloads Guatemala country + 22 department geometry from geoBoundaries, and preserves the current protected-area subset in DB.
 - The compose database now publishes on `localhost:55432` by default to avoid collisions with host-level PostgreSQL installations already using `localhost:5432`.

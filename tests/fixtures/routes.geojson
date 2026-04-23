@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "route-1",
+      "properties": {
+        "id": "route-1",
+        "name": "Cloud Route",
+        "category": "route",
+        "status": "visible",
+        "updatedAt": "2026-04-05",
+        "source": "fixture"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-90.55, 14.6], [-90.4, 14.68], [-90.28, 14.74]]
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 
+import { getLayerConfig } from "@/features/map/registry/layerRegistry";
 import { coerceMapFilters } from "@/lib/filters";
 import { getLayerCollection } from "@/lib/repository";
 
@@ -23,18 +24,18 @@ export async function GET(
 ) {
   const { layer } = await context.params;
   const filters = coerceMapFilters(request.nextUrl.searchParams);
+  const layerConfig = getLayerConfig(layer);
 
   if (
-    layer !== "departments" &&
-    layer !== "protected_areas" &&
-    layer !== "public_hex" &&
-    layer !== "species_presence"
+    !layerConfig ||
+    layerConfig.renderMode !== "geojson" ||
+    layerConfig.dataSource.kind !== "atlas-api-layer"
   ) {
     return Response.json({ error: "Layer not found" }, { status: 404 });
   }
 
   return Response.json(
-    await getLayerCollection(layer, filters, {
+    await getLayerCollection(layer as Parameters<typeof getLayerCollection>[0], filters, {
       bbox: coerceBBox(request.nextUrl.searchParams.get("bbox")),
       taxonSlug: request.nextUrl.searchParams.get("taxonSlug") ?? undefined
     })

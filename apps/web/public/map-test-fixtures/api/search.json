@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "id": "area-1",
+      "slug": "alta-verapaz",
+      "type": "area",
+      "title": "Alta Verapaz",
+      "subtitle": "Departamento",
+      "href": "/areas/alta-verapaz"
+    },
+    {
+      "id": "species-1",
+      "slug": "quetzal",
+      "type": "species",
+      "title": "Quetzal",
+      "subtitle": "Pharomachrus mocinno",
+      "href": "/species/quetzal"
+    }
+  ]
+}

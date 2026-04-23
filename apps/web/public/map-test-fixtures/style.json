@@ -1,0 +1,14 @@
+{
+  "version": 8,
+  "name": "BioGT Test Style",
+  "sources": {},
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#edf2ef"
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "alta-verapaz",
+      "properties": {
+        "id": "alta-verapaz",
+        "kind": "department",
+        "label": "Alta Verapaz",
+        "speciesCount": 330,
+        "biodiversityLabel": "330 especies"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[-90.9, 15.1], [-90.1, 15.1], [-90.1, 15.9], [-90.9, 15.9], [-90.9, 15.1]]]
+      }
+    }
+  ]
+}

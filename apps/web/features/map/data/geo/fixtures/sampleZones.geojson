@@ -1,0 +1,80 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "zone-1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-90.5435, 14.6364],
+            [-90.5255, 14.6364],
+            [-90.5255, 14.6498],
+            [-90.5435, 14.6498],
+            [-90.5435, 14.6364]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "zone-1",
+        "name": "North Reserve",
+        "category": "zone",
+        "status": "active",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "riskLevel": "low"
+      }
+    },
+    {
+      "id": "zone-2",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-90.512, 14.6216],
+            [-90.4898, 14.6216],
+            [-90.4898, 14.6382],
+            [-90.512, 14.6382],
+            [-90.512, 14.6216]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "zone-2",
+        "name": "Central Buffer",
+        "category": "zone",
+        "status": "watch",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "riskLevel": "medium"
+      }
+    },
+    {
+      "id": "zone-3",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-90.4845, 14.6052],
+            [-90.4621, 14.6052],
+            [-90.4621, 14.6214],
+            [-90.4845, 14.6214],
+            [-90.4845, 14.6052]
+          ]
+        ]
+      },
+      "properties": {
+        "id": "zone-3",
+        "name": "Southern Transition",
+        "category": "zone",
+        "status": "planned",
+        "source": "fixture",
+        "updatedAt": "2026-04-18T00:00:00.000Z",
+        "riskLevel": "high"
+      }
+    }
+  ]
+}

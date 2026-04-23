@@ -1,0 +1,27 @@
+{
+  "title": "BioGT / Atlas vivo de Guatemala",
+  "subtitle": "Fixture mode",
+  "metrics": {
+    "visibleSpecies": 12,
+    "visibleOccurrences": 48,
+    "activeSources": 3
+  },
+  "filterOptions": {
+    "taxonScopes": ["all", "flora", "fauna"],
+    "groups": ["all", "aves", "flora"],
+    "sourceTiers": ["all", "official", "community"],
+    "regions": [
+      { "id": "alta-verapaz", "label": "Alta Verapaz", "scopeType": "department" }
+    ],
+    "elevationBands": ["all", "baja", "media", "alta"],
+    "dateRanges": ["all", "30d", "12m"]
+  },
+  "featuredAreas": [],
+  "sourceMeta": {
+    "canonicalLabel": "Public fixture data",
+    "optionalOverlayLabel": "Fixture overlay",
+    "freshnessLabel": "Updated this week",
+    "confidenceLabel": "Stable QA sample"
+  },
+  "activeMode": "coverage"
+}
